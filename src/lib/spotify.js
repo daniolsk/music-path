@@ -1,7 +1,14 @@
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
+let token;
+let expiresIn;
+
 const getToken = async () => {
+	if (token && Date.now() / 1000 < expiresIn) {
+		return { access_token: token };
+	}
+
 	let myHeaders = new Headers();
 	myHeaders.append('Authorization', 'Basic ' + btoa(clientId + ':' + clientSecret));
 	myHeaders.append('Content-Type', 'application/x-www-form-urlencoded');
@@ -15,7 +22,13 @@ const getToken = async () => {
 		body: urlencoded,
 	});
 
+	if (!response.ok) console.error('STATUS ERROR: ' + response.status);
+
 	const data = await response.json();
+
+	token = data.access_token;
+	expiresIn = Date.now() / 1000 + data.expires_in;
+
 	return data;
 };
 
@@ -30,6 +43,8 @@ const getArtistRelatedArtists = async (artistId) => {
 			Authorization: `Bearer ${token.access_token}`,
 		},
 	});
+
+	if (!response.ok) console.error('STATUS ERROR: ' + response.status);
 
 	const data = await response.json();
 	return data;
@@ -47,6 +62,8 @@ const getArtist = async (artistId) => {
 		},
 	});
 
+	if (!response.ok) console.error('STATUS ERROR: ' + response.status);
+
 	const data = await response.json();
 	return data;
 };
@@ -63,13 +80,14 @@ const getAllArtistAlbums = async (artistId) => {
 		},
 	});
 
+	if (!response.ok) console.error('STATUS ERROR: ' + response.status);
+
 	const data = await response.json();
 	return data;
 };
 
 const getAlbumTracks = async (albumId) => {
 	const token = await getToken();
-
 	const response = await fetch(`	https://api.spotify.com/v1/albums/${albumId}/tracks`, {
 		method: 'GET',
 		headers: {
@@ -78,6 +96,8 @@ const getAlbumTracks = async (albumId) => {
 			Authorization: `Bearer ${token.access_token}`,
 		},
 	});
+
+	if (!response.ok) console.error('STATUS ERROR: ' + response.status);
 
 	const data = await response.json();
 	return data;
